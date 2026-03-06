@@ -4,7 +4,7 @@ Tags: media, cleanup, unused images, media cleaner, disk space
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,13 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 
 == Changelog ==
 
+= 1.5.0 =
+* Added "Empty Trash" button — batch-deletes all trashed attachments with progress bar
+* Added taxonomy image scanning: WooCommerce category thumbnails, term descriptions, attribute descriptions
+* Added termmeta deep scan for images stored by third-party plugins
+* Live tab count updates during Trash All and Empty Trash batch operations
+* Fixed trash tab count not updating after single/bulk trash, delete, or restore actions
+
 = 1.4.0 =
 * Fixed all WordPress Plugin Check errors
 * Proper output escaping (esc_html_e, esc_html__, esc_html)
@@ -136,6 +143,9 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 * Native WordPress admin UI — no external dependencies
 
 == Upgrade Notice ==
+
+= 1.5.0 =
+Adds Empty Trash, taxonomy image scanning, and live tab count updates.
 
 = 1.4.0 =
 Fixes all WordPress Plugin Check errors for WP.org compliance.
