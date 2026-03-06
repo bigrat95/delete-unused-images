@@ -3,21 +3,17 @@ defined('ABSPATH') || exit;
 
 class DUI_Scanner {
 
-    private $wpdb;
     private $used_ids = [];
-
-    public function __construct() {
-        global $wpdb;
-        $this->wpdb = $wpdb;
-    }
+    private $path_cache = [];
 
     /**
      * Run a full scan. Returns array of unused attachment IDs.
      * Works in batches via AJAX to avoid timeouts.
      */
     public function get_all_attachment_ids() {
-        return $this->wpdb->get_col(
-            "SELECT ID FROM {$this->wpdb->posts}
+        global $wpdb;
+        return $wpdb->get_col(
+            "SELECT ID FROM {$wpdb->posts}
              WHERE post_type = 'attachment'
              AND post_status != 'trash'
              ORDER BY ID ASC"
@@ -28,8 +24,9 @@ class DUI_Scanner {
      * Get total attachment count.
      */
     public function get_total_attachment_count() {
-        return (int) $this->wpdb->get_var(
-            "SELECT COUNT(ID) FROM {$this->wpdb->posts}
+        global $wpdb;
+        return (int) $wpdb->get_var(
+            "SELECT COUNT(ID) FROM {$wpdb->posts}
              WHERE post_type = 'attachment'
              AND post_status != 'trash'"
         );
@@ -149,8 +146,9 @@ class DUI_Scanner {
     // ─── Collection methods ───────────────────────────────────────────
 
     private function collect_featured_images() {
-        $ids = $this->wpdb->get_col(
-            "SELECT DISTINCT meta_value FROM {$this->wpdb->postmeta}
+        global $wpdb;
+        $ids = $wpdb->get_col(
+            "SELECT DISTINCT meta_value FROM {$wpdb->postmeta}
              WHERE meta_key = '_thumbnail_id'
              AND meta_value > 0"
         );
@@ -158,9 +156,10 @@ class DUI_Scanner {
     }
 
     private function collect_post_content_images() {
+        global $wpdb;
         // Get all post content that references uploads
-        $rows = $this->wpdb->get_col(
-            "SELECT post_content FROM {$this->wpdb->posts}
+        $rows = $wpdb->get_col(
+            "SELECT post_content FROM {$wpdb->posts}
              WHERE post_content LIKE '%wp-content/uploads%'
              AND post_status != 'trash'
              AND post_type NOT IN ('revision', 'attachment')"
@@ -193,22 +192,23 @@ class DUI_Scanner {
     }
 
     private function collect_postmeta_images() {
+        global $wpdb;
         // Find attachment IDs stored in postmeta (numeric values that are valid attachments)
         // This catches ACF image fields stored as IDs, WooCommerce product images, etc.
-        $rows = $this->wpdb->get_col(
-            "SELECT DISTINCT meta_value FROM {$this->wpdb->postmeta}
+        $rows = $wpdb->get_col(
+            "SELECT DISTINCT meta_value FROM {$wpdb->postmeta}
              WHERE meta_value REGEXP '^[0-9]+$'
              AND meta_value > 0
              AND meta_key NOT IN ('_edit_lock', '_edit_last', '_wp_old_date', '_price', '_regular_price', '_sale_price', '_stock', '_weight', '_length', '_width', '_height', 'total_sales', '_product_version', '_wp_page_template')
              AND CAST(meta_value AS UNSIGNED) IN (
-                SELECT ID FROM {$this->wpdb->posts} WHERE post_type = 'attachment'
+                SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment'
              )"
         );
         $this->used_ids = array_merge($this->used_ids, $rows);
 
         // Find URLs in postmeta
-        $url_rows = $this->wpdb->get_col(
-            "SELECT DISTINCT meta_value FROM {$this->wpdb->postmeta}
+        $url_rows = $wpdb->get_col(
+            "SELECT DISTINCT meta_value FROM {$wpdb->postmeta}
              WHERE meta_value LIKE '%wp-content/uploads%'
              AND meta_key NOT LIKE '_transient%'"
         );
@@ -240,10 +240,11 @@ class DUI_Scanner {
 
     private function collect_woocommerce_gallery() {
         if (!class_exists('WooCommerce')) return;
+        global $wpdb;
 
         // Product gallery images
-        $galleries = $this->wpdb->get_col(
-            "SELECT meta_value FROM {$this->wpdb->postmeta}
+        $galleries = $wpdb->get_col(
+            "SELECT meta_value FROM {$wpdb->postmeta}
              WHERE meta_key = '_product_image_gallery'
              AND meta_value != ''"
         );
@@ -256,11 +257,12 @@ class DUI_Scanner {
 
     private function collect_woocommerce_variations() {
         if (!class_exists('WooCommerce')) return;
+        global $wpdb;
 
         // Variation images
-        $variation_images = $this->wpdb->get_col(
-            "SELECT DISTINCT pm.meta_value FROM {$this->wpdb->postmeta} pm
-             INNER JOIN {$this->wpdb->posts} p ON pm.post_id = p.ID
+        $variation_images = $wpdb->get_col(
+            "SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm
+             INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
              WHERE p.post_type = 'product_variation'
              AND pm.meta_key = '_thumbnail_id'
              AND pm.meta_value > 0"
@@ -305,9 +307,10 @@ class DUI_Scanner {
     }
 
     private function collect_elementor_images() {
+        global $wpdb;
         // Elementor stores data in postmeta _elementor_data as JSON
-        $rows = $this->wpdb->get_col(
-            "SELECT meta_value FROM {$this->wpdb->postmeta}
+        $rows = $wpdb->get_col(
+            "SELECT meta_value FROM {$wpdb->postmeta}
              WHERE meta_key = '_elementor_data'
              AND meta_value != ''"
         );
@@ -349,6 +352,7 @@ class DUI_Scanner {
      */
     private function collect_acf_all_fields() {
         if (!function_exists('acf_get_field_groups')) return;
+        global $wpdb;
 
         // 1. Get all ACF field groups and their fields (recursive for sub-fields)
         $image_keys = [];
@@ -370,8 +374,8 @@ class DUI_Scanner {
         if (!empty($image_file_keys)) {
             $placeholders = implode(',', array_fill(0, count($image_file_keys), '%s'));
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-            $ids = $this->wpdb->get_col( $this->wpdb->prepare(
-                "SELECT DISTINCT meta_value FROM {$this->wpdb->postmeta}
+            $ids = $wpdb->get_col( $wpdb->prepare(
+                "SELECT DISTINCT meta_value FROM {$wpdb->postmeta}
                  WHERE meta_key IN ($placeholders)
                  AND meta_value REGEXP '^[0-9]+$'
                  AND meta_value > 0",
@@ -384,8 +388,8 @@ class DUI_Scanner {
         if (!empty($gallery_keys)) {
             $placeholders = implode(',', array_fill(0, count($gallery_keys), '%s'));
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-            $rows = $this->wpdb->get_col( $this->wpdb->prepare(
-                "SELECT meta_value FROM {$this->wpdb->postmeta}
+            $rows = $wpdb->get_col( $wpdb->prepare(
+                "SELECT meta_value FROM {$wpdb->postmeta}
                  WHERE meta_key IN ($placeholders)
                  AND meta_value != ''",
                 ...$gallery_keys
@@ -412,8 +416,8 @@ class DUI_Scanner {
         $this->collect_acf_repeater_sub_fields($image_keys, $file_keys, $gallery_keys);
 
         // 5. Serialized ACF arrays (image/file return format = array)
-        $rows = $this->wpdb->get_col(
-            "SELECT meta_value FROM {$this->wpdb->postmeta}
+        $rows = $wpdb->get_col(
+            "SELECT meta_value FROM {$wpdb->postmeta}
              WHERE meta_value LIKE 'a:%'
              AND (meta_value LIKE '%\"id\"%' OR meta_value LIKE '%\"ID\"%')
              AND meta_value LIKE '%upload%'"
@@ -425,10 +429,10 @@ class DUI_Scanner {
         // 6. ACF URL-based return format (image field returns URL string)
         if (!empty($image_file_keys)) {
             $placeholders = implode(',', array_fill(0, count($image_file_keys), '%s'));
-            $like_uploads = '%' . $this->wpdb->esc_like('wp-content/uploads') . '%';
+            $like_uploads = '%' . $wpdb->esc_like('wp-content/uploads') . '%';
             // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-            $urls = $this->wpdb->get_col( $this->wpdb->prepare(
-                "SELECT DISTINCT meta_value FROM {$this->wpdb->postmeta}
+            $urls = $wpdb->get_col( $wpdb->prepare(
+                "SELECT DISTINCT meta_value FROM {$wpdb->postmeta}
                  WHERE meta_key IN ($placeholders)
                  AND meta_value LIKE %s",
                 ...array_merge($image_file_keys, [$like_uploads])
@@ -481,17 +485,18 @@ class DUI_Scanner {
     private function collect_acf_repeater_sub_fields($image_keys, $file_keys, $gallery_keys) {
         $sub_field_names = array_merge($image_keys, $file_keys, $gallery_keys);
         if (empty($sub_field_names)) return;
+        global $wpdb;
 
         // Build LIKE conditions for each sub-field name
         $like_conditions = [];
         foreach ($sub_field_names as $name) {
-            $escaped = $this->wpdb->esc_like($name);
-            $like_conditions[] = $this->wpdb->prepare("meta_key LIKE %s", '%_' . $escaped);
+            $escaped = $wpdb->esc_like($name);
+            $like_conditions[] = $wpdb->prepare("meta_key LIKE %s", '%_' . $escaped);
         }
 
         $where = implode(' OR ', $like_conditions);
-        $rows = $this->wpdb->get_results(
-            "SELECT meta_key, meta_value FROM {$this->wpdb->postmeta}
+        $rows = $wpdb->get_results(
+            "SELECT meta_key, meta_value FROM {$wpdb->postmeta}
              WHERE ($where)
              AND meta_value != ''"
         );
@@ -565,12 +570,13 @@ class DUI_Scanner {
      */
     private function collect_acf_option_pages() {
         if (!function_exists('acf_get_field_groups')) return;
+        global $wpdb;
 
         // ACF options are stored in wp_options as options_{field_name}
-        $like_options = $this->wpdb->esc_like('options_') . '%';
+        $like_options = $wpdb->esc_like('options_') . '%';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $rows = $this->wpdb->get_results( $this->wpdb->prepare(
-            "SELECT option_name, option_value FROM {$this->wpdb->options}
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT option_name, option_value FROM {$wpdb->options}
              WHERE option_name LIKE %s
              AND option_value != ''",
             $like_options
@@ -582,8 +588,8 @@ class DUI_Scanner {
             // Numeric ID (image/file field)
             if (is_numeric($val) && (int)$val > 0) {
                 // Verify it's an attachment
-                $is_attachment = $this->wpdb->get_var($this->wpdb->prepare(
-                    "SELECT ID FROM {$this->wpdb->posts} WHERE ID = %d AND post_type = 'attachment'",
+                $is_attachment = $wpdb->get_var($wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->posts} WHERE ID = %d AND post_type = 'attachment'",
                     (int) $val
                 ));
                 if ($is_attachment) {
@@ -687,9 +693,10 @@ class DUI_Scanner {
      * Find images referenced in CSS background-image in post_content and postmeta.
      */
     private function collect_css_background_images() {
+        global $wpdb;
         // Post content with inline styles
-        $rows = $this->wpdb->get_col(
-            "SELECT post_content FROM {$this->wpdb->posts}
+        $rows = $wpdb->get_col(
+            "SELECT post_content FROM {$wpdb->posts}
              WHERE post_content LIKE '%background%upload%'
              AND post_status != 'trash'
              AND post_type NOT IN ('revision', 'attachment')"
@@ -712,9 +719,10 @@ class DUI_Scanner {
      * Catches complex plugin data structures.
      */
     private function collect_serialized_postmeta() {
+        global $wpdb;
         // Find serialized arrays that contain upload references
-        $rows = $this->wpdb->get_col(
-            "SELECT meta_value FROM {$this->wpdb->postmeta}
+        $rows = $wpdb->get_col(
+            "SELECT meta_value FROM {$wpdb->postmeta}
              WHERE meta_value LIKE 'a:%'
              AND meta_value LIKE '%wp-content/uploads%'
              AND meta_key NOT LIKE '_transient%'
@@ -740,9 +748,8 @@ class DUI_Scanner {
      * Find attachment ID from a partial upload path (e.g. "2025/06/photo.jpg").
      * Caches lookups for performance.
      */
-    private $path_cache = [];
-
     private function find_attachment_by_path($path) {
+        global $wpdb;
         // Clean path
         $path = trim($path, '"\'\\/ ');
         // Remove thumbnail size suffix for lookup (e.g. photo-300x200.jpg -> photo.jpg)
@@ -752,8 +759,8 @@ class DUI_Scanner {
             return $this->path_cache[$clean];
         }
 
-        $id = $this->wpdb->get_var($this->wpdb->prepare(
-            "SELECT post_id FROM {$this->wpdb->postmeta}
+        $id = $wpdb->get_var($wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta}
              WHERE meta_key = '_wp_attached_file'
              AND meta_value = %s
              LIMIT 1",
@@ -762,8 +769,8 @@ class DUI_Scanner {
 
         // If not found, try with the original (might be a thumbnail filename)
         if (!$id && $clean !== $path) {
-            $id = $this->wpdb->get_var($this->wpdb->prepare(
-                "SELECT post_id FROM {$this->wpdb->postmeta}
+            $id = $wpdb->get_var($wpdb->prepare(
+                "SELECT post_id FROM {$wpdb->postmeta}
                  WHERE meta_key = '_wp_attached_file'
                  AND meta_value = %s
                  LIMIT 1",
