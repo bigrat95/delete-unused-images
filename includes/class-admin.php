@@ -13,6 +13,7 @@ class DUI_Admin {
         add_action('wp_ajax_dui_get_results', [__CLASS__, 'ajax_get_results']);
         add_action('wp_ajax_dui_trash_single', [__CLASS__, 'ajax_trash_single']);
         add_action('wp_ajax_dui_trash_bulk', [__CLASS__, 'ajax_trash_bulk']);
+        add_action('wp_ajax_dui_trash_all_batch', [__CLASS__, 'ajax_trash_all_batch']);
         add_action('wp_ajax_dui_delete_single', [__CLASS__, 'ajax_delete_single']);
         add_action('wp_ajax_dui_delete_bulk', [__CLASS__, 'ajax_delete_bulk']);
         add_action('wp_ajax_dui_whitelist_single', [__CLASS__, 'ajax_whitelist_single']);
@@ -21,6 +22,10 @@ class DUI_Admin {
         add_action('wp_ajax_dui_remove_whitelist_bulk', [__CLASS__, 'ajax_remove_whitelist_bulk']);
         add_action('wp_ajax_dui_restore_single', [__CLASS__, 'ajax_restore_single']);
         add_action('wp_ajax_dui_restore_bulk', [__CLASS__, 'ajax_restore_bulk']);
+        add_action('wp_ajax_dui_save_cron_settings', [__CLASS__, 'ajax_save_cron_settings']);
+
+        // Cron hook
+        add_action('dui_scheduled_cleanup', [__CLASS__, 'run_scheduled_cleanup']);
     }
 
     public static function activate() {
@@ -35,6 +40,7 @@ class DUI_Admin {
         delete_option('dui_scan_results');
         delete_option('dui_scan_used_ids');
         delete_option('dui_scan_date');
+        wp_clear_scheduled_hook('dui_scheduled_cleanup');
     }
 
     public static function add_menu() {
@@ -76,7 +82,8 @@ class DUI_Admin {
                 'confirm_delete' => __('Permanently delete this file? This cannot be undone.', 'delete-unused-images'),
                 'confirm_bulk_trash'  => __('Trash all selected files?', 'delete-unused-images'),
                 'confirm_bulk_delete' => __('Permanently delete all selected files? This cannot be undone.', 'delete-unused-images'),
-                'no_selection'   => __('No files selected.', 'delete-unused-images'),
+                'no_selection'        => __('No files selected.', 'delete-unused-images'),
+                'confirm_trash_all'   => __('Trash ALL unused images? This will process all pages in batches.', 'delete-unused-images'),
             ],
         ]);
     }
@@ -142,6 +149,7 @@ class DUI_Admin {
                     <?php if ($tab === 'unused'): ?>
                         <button type="button" class="button" id="dui-bulk-trash-btn"><?php _e('Trash Selected', 'delete-unused-images'); ?></button>
                         <button type="button" class="button" id="dui-bulk-whitelist-btn"><?php _e('Whitelist Selected', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-trash-all-btn" style="color:#b32d2e;"><?php _e('Trash All Unused', 'delete-unused-images'); ?></button>
                     <?php elseif ($tab === 'whitelist'): ?>
                         <button type="button" class="button" id="dui-bulk-remove-whitelist-btn"><?php _e('Remove from Whitelist', 'delete-unused-images'); ?></button>
                     <?php elseif ($tab === 'trash'): ?>
@@ -157,6 +165,49 @@ class DUI_Admin {
             </div>
 
             <div class="tablenav bottom" id="dui-pagination"></div>
+
+            <div class="postbox" style="margin-top:30px;">
+                <div class="postbox-header"><h2 style="padding:8px 12px;margin:0;"><?php _e('Scheduled Auto-Cleanup', 'delete-unused-images'); ?></h2></div>
+                <div class="inside">
+                    <?php
+                    $cron_enabled = get_option('dui_cron_enabled', false);
+                    $cron_frequency = get_option('dui_cron_frequency', 'daily');
+                    $next_run = wp_next_scheduled('dui_scheduled_cleanup');
+                    ?>
+                    <table class="form-table">
+                        <tr>
+                            <th><?php _e('Enable Auto-Cleanup', 'delete-unused-images'); ?></th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" id="dui-cron-enabled" <?php checked($cron_enabled); ?>>
+                                    <?php _e('Automatically scan and trash unused images on a schedule', 'delete-unused-images'); ?>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Frequency', 'delete-unused-images'); ?></th>
+                            <td>
+                                <select id="dui-cron-frequency">
+                                    <option value="daily" <?php selected($cron_frequency, 'daily'); ?>><?php _e('Daily', 'delete-unused-images'); ?></option>
+                                    <option value="twicedaily" <?php selected($cron_frequency, 'twicedaily'); ?>><?php _e('Twice Daily', 'delete-unused-images'); ?></option>
+                                    <option value="weekly" <?php selected($cron_frequency, 'weekly'); ?>><?php _e('Weekly', 'delete-unused-images'); ?></option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><?php _e('Next Scheduled Run', 'delete-unused-images'); ?></th>
+                            <td>
+                                <span id="dui-next-run">
+                                    <?php echo $next_run ? date_i18n('M j, Y g:i a', $next_run) : __('Not scheduled', 'delete-unused-images'); ?>
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                    <p>
+                        <button type="button" id="dui-save-cron-btn" class="button button-primary"><?php _e('Save Settings', 'delete-unused-images'); ?></button>
+                    </p>
+                </div>
+            </div>
         </div>
         <?php
     }
@@ -618,6 +669,122 @@ class DUI_Admin {
             'message' => sprintf(__('%d files restored.', 'delete-unused-images'), $restored),
             'count'   => $restored,
         ]);
+    }
+
+    /**
+     * Trash all unused in batches (AJAX).
+     */
+    public static function ajax_trash_all_batch() {
+        self::verify_request();
+
+        $batch_size = 50;
+        $scan_results = get_option('dui_scan_results', []);
+        $whitelist = get_option('dui_whitelist', []);
+
+        // Filter out whitelisted
+        $scan_results = array_filter($scan_results, function($item) use ($whitelist) {
+            return !in_array((int)$item['id'], $whitelist, true);
+        });
+        $scan_results = array_values($scan_results);
+
+        $total = count($scan_results);
+        $batch = array_slice($scan_results, 0, $batch_size);
+        $trashed = 0;
+
+        foreach ($batch as $item) {
+            if (wp_trash_post((int)$item['id'])) {
+                self::remove_from_scan_results((int)$item['id']);
+                $trashed++;
+            }
+        }
+
+        $remaining = $total - $trashed;
+
+        wp_send_json_success([
+            'trashed'   => $trashed,
+            'remaining' => max(0, $remaining),
+            'total'     => $total,
+            'done'      => $remaining <= 0,
+        ]);
+    }
+
+    /**
+     * Save cron settings.
+     */
+    public static function ajax_save_cron_settings() {
+        self::verify_request();
+
+        $enabled = !empty($_POST['enabled']);
+        $frequency = sanitize_text_field($_POST['frequency'] ?? 'daily');
+
+        if (!in_array($frequency, ['daily', 'twicedaily', 'weekly'], true)) {
+            $frequency = 'daily';
+        }
+
+        update_option('dui_cron_enabled', $enabled, false);
+        update_option('dui_cron_frequency', $frequency, false);
+
+        // Clear existing schedule
+        wp_clear_scheduled_hook('dui_scheduled_cleanup');
+
+        $next_run = '';
+        if ($enabled) {
+            wp_schedule_event(time() + 60, $frequency, 'dui_scheduled_cleanup');
+            $next_run = date_i18n('M j, Y g:i a', wp_next_scheduled('dui_scheduled_cleanup'));
+        }
+
+        wp_send_json_success([
+            'message'  => $enabled
+                ? sprintf(__('Auto-cleanup enabled (%s). Next run: %s', 'delete-unused-images'), $frequency, $next_run)
+                : __('Auto-cleanup disabled.', 'delete-unused-images'),
+            'next_run' => $next_run ?: __('Not scheduled', 'delete-unused-images'),
+        ]);
+    }
+
+    /**
+     * Cron callback: scan + trash unused images.
+     */
+    public static function run_scheduled_cleanup() {
+        $scanner = new DUI_Scanner();
+        $used_ids = $scanner->collect_used_ids();
+        $whitelist = get_option('dui_whitelist', []);
+        $total = $scanner->get_total_attachment_count();
+
+        global $wpdb;
+        $batch_size = 100;
+        $offset = 0;
+        $all_unused = [];
+
+        while (true) {
+            $attachment_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT ID FROM {$wpdb->posts}
+                 WHERE post_type = 'attachment'
+                 AND post_status != 'trash'
+                 ORDER BY ID ASC
+                 LIMIT %d OFFSET %d",
+                $batch_size, $offset
+            ));
+
+            if (empty($attachment_ids)) break;
+
+            foreach ($attachment_ids as $id) {
+                $id = (int) $id;
+                if (!in_array($id, $used_ids, true) && !in_array($id, $whitelist, true)) {
+                    $info = $scanner->get_attachment_info($id);
+                    if ($info) {
+                        $all_unused[] = $info;
+                        wp_trash_post($id);
+                    }
+                }
+            }
+
+            $offset += $batch_size;
+            if (count($attachment_ids) < $batch_size) break;
+        }
+
+        // Update scan results and date
+        update_option('dui_scan_results', [], false);
+        update_option('dui_scan_date', current_time('mysql'), false);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────

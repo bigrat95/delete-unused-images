@@ -120,6 +120,17 @@
                 self.restoreBulk(ids);
             });
 
+            // Trash All
+            $('#dui-trash-all-btn').on('click', function() {
+                if (!confirm(duiObj.strings.confirm_trash_all)) return;
+                self.trashAll();
+            });
+
+            // Cron settings
+            $('#dui-save-cron-btn').on('click', function() {
+                self.saveCronSettings();
+            });
+
             // Pagination
             $(document).on('click', '.dui-page-btn', function() {
                 var page = $(this).data('page');
@@ -489,6 +500,86 @@
                 } else {
                     $('.dui-loading').removeClass('dui-loading');
                     self.toast(res.data, 'error');
+                }
+            });
+        },
+
+        trashAll: function() {
+            var self = this;
+            var $btn = $('#dui-trash-all-btn');
+            var $progress = $('#dui-progress-wrap');
+            var $fill = $('#dui-progress-fill');
+            var $text = $('#dui-progress-text');
+            var totalStart = 0;
+
+            $btn.prop('disabled', true).text('Trashing...');
+            $progress.show();
+            $fill.css('width', '0%');
+            $text.text('Starting...');
+
+            self.trashAllBatch(totalStart);
+        },
+
+        trashAllBatch: function(totalStart) {
+            var self = this;
+            var $fill = $('#dui-progress-fill');
+            var $text = $('#dui-progress-text');
+
+            $.post(duiObj.ajaxurl, {
+                action: 'dui_trash_all_batch',
+                nonce: duiObj.nonce
+            }, function(res) {
+                if (!res.success) {
+                    self.toast('Error trashing files', 'error');
+                    self.resetTrashAllUI();
+                    return;
+                }
+
+                if (totalStart === 0) totalStart = res.data.total || 1;
+                var trashed = totalStart - res.data.remaining;
+                var pct = Math.min(100, Math.round((trashed / totalStart) * 100));
+                $fill.css('width', pct + '%');
+                $text.text(pct + '% — ' + trashed + ' / ' + totalStart + ' trashed');
+
+                if (res.data.done) {
+                    $fill.css('width', '100%');
+                    $text.text('Done! ' + totalStart + ' files moved to trash.');
+                    self.toast(totalStart + ' files moved to trash.', 'success');
+                    self.currentPage = 1;
+                    self.loadResults();
+                    setTimeout(function() {
+                        $('#dui-progress-wrap').fadeOut();
+                        self.resetTrashAllUI();
+                    }, 3000);
+                } else {
+                    self.trashAllBatch(totalStart);
+                }
+            }).fail(function() {
+                self.toast('Network error', 'error');
+                self.resetTrashAllUI();
+            });
+        },
+
+        resetTrashAllUI: function() {
+            $('#dui-trash-all-btn').prop('disabled', false).text('Trash All Unused');
+        },
+
+        saveCronSettings: function() {
+            var self = this;
+            var enabled = $('#dui-cron-enabled').is(':checked');
+            var frequency = $('#dui-cron-frequency').val();
+
+            $.post(duiObj.ajaxurl, {
+                action: 'dui_save_cron_settings',
+                nonce: duiObj.nonce,
+                enabled: enabled ? 1 : 0,
+                frequency: frequency
+            }, function(res) {
+                if (res.success) {
+                    self.toast(res.data.message, 'success');
+                    $('#dui-next-run').text(res.data.next_run);
+                } else {
+                    self.toast(res.data || 'Error saving settings', 'error');
                 }
             });
         },

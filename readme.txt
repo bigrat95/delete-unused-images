@@ -2,9 +2,9 @@
 Contributors: bigrat95
 Tags: media, cleanup, unused images, media cleaner, disk space
 Requires at least: 5.8
-Tested up to: 6.7
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,6 +33,8 @@ Scan and remove unused media files from your WordPress site to free up disk spac
 * **Batch scanning** — processes 50 attachments per batch to avoid timeouts
 * **Whitelist** — protect files you want to keep even if unused
 * **Bulk actions** — trash, whitelist, restore, or permanently delete multiple files at once
+* **Trash All** — one-click batch trash of all unused images with progress bar (handles thousands)
+* **Scheduled auto-cleanup** — enable daily, twice daily, or weekly automatic scan and trash via WP-Cron
 * **Progress bar** — real-time scanning progress
 * **No external dependencies** — uses native WordPress admin styles, no Bootstrap or jQuery UI
 * **Zero custom database tables** — stores data in WordPress options
@@ -97,6 +99,13 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 
 == Changelog ==
 
+= 1.1.0 =
+* Added "Trash All Unused" button — batch-processes all unused images with progress bar
+* Added scheduled auto-cleanup via WP-Cron (daily, twice daily, or weekly)
+* Settings panel for enabling/disabling auto-cleanup and choosing frequency
+* Native WordPress admin UI refinements (postbox, form-table, nav-tab-wrapper, widefat)
+* Reduced custom CSS from 500+ lines to ~20 lines
+
 = 1.0.0 =
 * Initial release
 * Deep scanning: post content, featured images, post meta, ACF fields, WooCommerce, Elementor, theme files, widgets, site identity
@@ -107,6 +116,9 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 * Native WordPress admin UI — no external dependencies
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds Trash All button and scheduled auto-cleanup.
 
 = 1.0.0 =
 Initial release.
