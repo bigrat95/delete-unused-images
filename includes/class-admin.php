@@ -159,6 +159,17 @@ class DUI_Admin {
                     <span id="dui-selected-info" class="description" style="margin-left:8px;"></span>
                 </div>
                 <div class="alignright">
+                    <select id="dui-filter-type" style="vertical-align:middle;">
+                        <option value=""><?php _e('All Types', 'delete-unused-images'); ?></option>
+                        <option value="jpg"><?php _e('JPG', 'delete-unused-images'); ?></option>
+                        <option value="jpeg"><?php _e('JPEG', 'delete-unused-images'); ?></option>
+                        <option value="png"><?php _e('PNG', 'delete-unused-images'); ?></option>
+                        <option value="gif"><?php _e('GIF', 'delete-unused-images'); ?></option>
+                        <option value="webp"><?php _e('WebP', 'delete-unused-images'); ?></option>
+                        <option value="svg"><?php _e('SVG', 'delete-unused-images'); ?></option>
+                        <option value="pdf"><?php _e('PDF', 'delete-unused-images'); ?></option>
+                        <option value="mp4"><?php _e('MP4', 'delete-unused-images'); ?></option>
+                    </select>
                     <input type="search" id="dui-search" placeholder="<?php esc_attr_e('Search files...', 'delete-unused-images'); ?>" style="vertical-align:middle;">
                     <button type="button" id="dui-search-btn" class="button"><?php _e('Search', 'delete-unused-images'); ?></button>
                 </div>
@@ -250,9 +261,9 @@ class DUI_Admin {
         <?php
     }
 
-    private static function render_results_table($tab, $page = 1, $per_page = 20, $search = '') {
+    private static function render_results_table($tab, $page = 1, $per_page = 20, $search = '', $orderby = 'date', $order = 'desc', $filter_type = '') {
         $scanner = new DUI_Scanner();
-        $items = [];
+        $all_items = [];
         $total_items = 0;
 
         if ($tab === 'unused') {
@@ -261,47 +272,71 @@ class DUI_Admin {
             $scan_results = array_filter($scan_results, function($item) use ($whitelist) {
                 return !in_array((int)$item['id'], $whitelist, true);
             });
-            if ($search) {
-                $search_lower = strtolower($search);
-                $scan_results = array_filter($scan_results, function($item) use ($search_lower) {
-                    return strpos(strtolower($item['title'] ?? ''), $search_lower) !== false
-                        || strpos(strtolower($item['url'] ?? ''), $search_lower) !== false
-                        || strpos(strtolower($item['ext'] ?? ''), $search_lower) !== false
-                        || strpos((string)($item['id'] ?? ''), $search_lower) !== false;
-                });
-            }
-            $scan_results = array_values($scan_results);
-            $total_items = count($scan_results);
-            $items = array_slice($scan_results, ($page - 1) * $per_page, $per_page);
+            $all_items = array_values($scan_results);
 
         } elseif ($tab === 'whitelist') {
             $whitelist = get_option('dui_whitelist', []);
-            $all_items = [];
             foreach ($whitelist as $id) {
                 $info = $scanner->get_attachment_info($id);
                 if ($info) $all_items[] = $info;
             }
-            $total_items = count($all_items);
-            $items = array_slice($all_items, ($page - 1) * $per_page, $per_page);
 
         } elseif ($tab === 'trash') {
             global $wpdb;
-            $total_items = (int) $wpdb->get_var(
-                "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_status = 'trash'"
+            $rows = $wpdb->get_results(
+                "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment' AND post_status = 'trash' ORDER BY ID ASC"
             );
-            $offset = ($page - 1) * $per_page;
-            $rows = $wpdb->get_results($wpdb->prepare(
-                "SELECT ID FROM {$wpdb->posts}
-                 WHERE post_type = 'attachment' AND post_status = 'trash'
-                 ORDER BY post_date DESC LIMIT %d OFFSET %d",
-                $per_page, $offset
-            ));
             foreach ($rows as $row) {
                 $info = $scanner->get_attachment_info($row->ID);
-                if ($info) $items[] = $info;
+                if ($info) $all_items[] = $info;
             }
         }
 
+        // Filter by search
+        if ($search) {
+            $search_lower = strtolower($search);
+            $all_items = array_filter($all_items, function($item) use ($search_lower) {
+                return strpos(strtolower($item['title'] ?? ''), $search_lower) !== false
+                    || strpos(strtolower($item['url'] ?? ''), $search_lower) !== false
+                    || strpos(strtolower($item['ext'] ?? ''), $search_lower) !== false
+                    || strpos((string)($item['id'] ?? ''), $search_lower) !== false;
+            });
+        }
+
+        // Filter by file type
+        if ($filter_type) {
+            $filter_lower = strtolower($filter_type);
+            $all_items = array_filter($all_items, function($item) use ($filter_lower) {
+                return strtolower($item['ext'] ?? '') === $filter_lower;
+            });
+        }
+
+        $all_items = array_values($all_items);
+
+        // Sort
+        if ($orderby && !empty($all_items)) {
+            usort($all_items, function($a, $b) use ($orderby, $order) {
+                switch ($orderby) {
+                    case 'name':
+                        $cmp = strcasecmp($a['title'] ?? '', $b['title'] ?? '');
+                        break;
+                    case 'size':
+                        $cmp = ((int)($a['file_size'] ?? 0)) - ((int)($b['file_size'] ?? 0));
+                        break;
+                    case 'type':
+                        $cmp = strcasecmp($a['ext'] ?? '', $b['ext'] ?? '');
+                        break;
+                    case 'date':
+                    default:
+                        $cmp = strcmp($a['date'] ?? '', $b['date'] ?? '');
+                        break;
+                }
+                return $order === 'asc' ? $cmp : -$cmp;
+            });
+        }
+
+        $total_items = count($all_items);
+        $items = array_slice($all_items, ($page - 1) * $per_page, $per_page);
         $total_pages = ceil($total_items / $per_page);
 
         if (empty($items)) {
@@ -321,10 +356,10 @@ class DUI_Admin {
         echo '<thead><tr>';
         echo '<th class="check-column"><input type="checkbox" class="dui-select-all-header"></th>';
         echo '<th>' . __('File', 'delete-unused-images') . '</th>';
-        echo '<th>' . __('Name', 'delete-unused-images') . '</th>';
-        echo '<th>' . __('Size', 'delete-unused-images') . '</th>';
-        echo '<th>' . __('Type', 'delete-unused-images') . '</th>';
-        echo '<th>' . __('Date', 'delete-unused-images') . '</th>';
+        echo '<th class="dui-sortable" data-sort="name" style="cursor:pointer;">' . __('Name', 'delete-unused-images') . self::sort_indicator('name', $orderby, $order) . '</th>';
+        echo '<th class="dui-sortable" data-sort="size" style="cursor:pointer;">' . __('Size', 'delete-unused-images') . self::sort_indicator('size', $orderby, $order) . '</th>';
+        echo '<th class="dui-sortable" data-sort="type" style="cursor:pointer;">' . __('Type', 'delete-unused-images') . self::sort_indicator('type', $orderby, $order) . '</th>';
+        echo '<th class="dui-sortable" data-sort="date" style="cursor:pointer;">' . __('Date', 'delete-unused-images') . self::sort_indicator('date', $orderby, $order) . '</th>';
         echo '<th>' . __('Actions', 'delete-unused-images') . '</th>';
         echo '</tr></thead><tbody>';
 
@@ -364,6 +399,12 @@ class DUI_Admin {
         echo '</tbody></table>';
 
         echo '<script>document.getElementById("dui-pagination").dataset.totalPages = ' . (int) $total_pages . '; document.getElementById("dui-pagination").dataset.currentPage = ' . (int) $page . '; document.getElementById("dui-pagination").dataset.totalItems = ' . (int) $total_items . ';</script>';
+    }
+
+    private static function sort_indicator($col, $orderby, $order) {
+        if ($col !== $orderby) return ' <span class="dashicons dashicons-sort" style="font-size:14px;width:14px;height:14px;color:#c3c4c7;vertical-align:middle;"></span>';
+        $icon = $order === 'asc' ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
+        return ' <span class="dashicons ' . $icon . '" style="font-size:14px;width:14px;height:14px;vertical-align:middle;"></span>';
     }
 
     private static function get_thumb_html($item) {
@@ -473,9 +514,15 @@ class DUI_Admin {
         $tab = sanitize_text_field($_POST['tab'] ?? 'unused');
         $page = max(1, (int) ($_POST['page'] ?? 1));
         $search = sanitize_text_field($_POST['search'] ?? '');
+        $orderby = sanitize_text_field($_POST['orderby'] ?? 'date');
+        $order = sanitize_text_field($_POST['order'] ?? 'desc');
+        $filter_type = sanitize_text_field($_POST['filter_type'] ?? '');
+
+        if (!in_array($orderby, ['name', 'size', 'type', 'date'], true)) $orderby = 'date';
+        if (!in_array($order, ['asc', 'desc'], true)) $order = 'desc';
 
         ob_start();
-        self::render_results_table($tab, $page, 20, $search);
+        self::render_results_table($tab, $page, 20, $search, $orderby, $order, $filter_type);
         $html = ob_get_clean();
 
         ob_start();

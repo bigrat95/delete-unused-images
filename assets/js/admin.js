@@ -6,6 +6,9 @@
         currentPage: 1,
         scanning: false,
         searchTerm: '',
+        sortBy: 'date',
+        sortOrder: 'desc',
+        filterType: '',
 
         init: function() {
             // Detect current tab from URL
@@ -37,7 +40,11 @@
                     url.searchParams.set('tab', self.currentTab);
                     window.history.replaceState({}, '', url);
                     self.searchTerm = '';
+                    self.filterType = '';
+                    self.sortBy = 'date';
+                    self.sortOrder = 'desc';
                     $('#dui-search').val('');
+                    $('#dui-filter-type').val('');
                     self.loadResults();
                     self.updateBulkBar();
                 }
@@ -132,6 +139,26 @@
             // Cron settings
             $('#dui-save-cron-btn').on('click', function() {
                 self.saveCronSettings();
+            });
+
+            // Sort by column header
+            $(document).on('click', '.dui-sortable', function() {
+                var col = $(this).data('sort');
+                if (self.sortBy === col) {
+                    self.sortOrder = self.sortOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    self.sortBy = col;
+                    self.sortOrder = col === 'date' ? 'desc' : 'asc';
+                }
+                self.currentPage = 1;
+                self.loadResults();
+            });
+
+            // Filter by type
+            $('#dui-filter-type').on('change', function() {
+                self.filterType = $(this).val();
+                self.currentPage = 1;
+                self.loadResults();
             });
 
             // Search
@@ -266,7 +293,10 @@
                 nonce: duiObj.nonce,
                 tab: this.currentTab,
                 page: this.currentPage,
-                search: this.searchTerm
+                search: this.searchTerm,
+                orderby: this.sortBy,
+                order: this.sortOrder,
+                filter_type: this.filterType
             }, function(res) {
                 if (res.success) {
                     $results.html(res.data.html).css('opacity', '1');
