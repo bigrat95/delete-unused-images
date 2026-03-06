@@ -9,6 +9,7 @@
         sortBy: 'date',
         sortOrder: 'desc',
         filterType: '',
+        perPage: 20,
 
         init: function() {
             // Detect current tab from URL
@@ -150,6 +151,13 @@
                     self.sortBy = col;
                     self.sortOrder = col === 'date' ? 'desc' : 'asc';
                 }
+                self.currentPage = 1;
+                self.loadResults();
+            });
+
+            // Per page
+            $('#dui-per-page').on('change', function() {
+                self.perPage = parseInt($(this).val());
                 self.currentPage = 1;
                 self.loadResults();
             });
@@ -296,7 +304,8 @@
                 search: this.searchTerm,
                 orderby: this.sortBy,
                 order: this.sortOrder,
-                filter_type: this.filterType
+                filter_type: this.filterType,
+                per_page: this.perPage
             }, function(res) {
                 if (res.success) {
                     $results.html(res.data.html).css('opacity', '1');

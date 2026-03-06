@@ -179,7 +179,20 @@ class DUI_Admin {
                 <?php self::render_results_table($tab); ?>
             </div>
 
-            <div class="tablenav bottom" id="dui-pagination"></div>
+            <div class="tablenav bottom">
+                <div class="alignleft actions">
+                    <label><?php _e('Show', 'delete-unused-images'); ?>
+                        <select id="dui-per-page" style="vertical-align:middle;">
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <?php _e('per page', 'delete-unused-images'); ?>
+                    </label>
+                </div>
+                <div class="alignright" id="dui-pagination"></div>
+                <br class="clear">
+            </div>
 
             <div class="postbox" style="margin-top:30px;">
                 <div class="postbox-header"><h2 style="padding:8px 12px;margin:0;"><?php _e('Scheduled Auto-Cleanup', 'delete-unused-images'); ?></h2></div>
@@ -519,12 +532,14 @@ class DUI_Admin {
         $orderby = sanitize_text_field($_POST['orderby'] ?? 'date');
         $order = sanitize_text_field($_POST['order'] ?? 'desc');
         $filter_type = sanitize_text_field($_POST['filter_type'] ?? '');
+        $per_page = (int) ($_POST['per_page'] ?? 20);
 
         if (!in_array($orderby, ['name', 'size', 'type', 'date'], true)) $orderby = 'date';
         if (!in_array($order, ['asc', 'desc'], true)) $order = 'desc';
+        if (!in_array($per_page, [20, 50, 100], true)) $per_page = 20;
 
         ob_start();
-        self::render_results_table($tab, $page, 20, $search, $orderby, $order, $filter_type);
+        self::render_results_table($tab, $page, $per_page, $search, $orderby, $order, $filter_type);
         $html = ob_get_clean();
 
         ob_start();
