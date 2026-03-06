@@ -5,6 +5,7 @@
         currentTab: 'unused',
         currentPage: 1,
         scanning: false,
+        searchTerm: '',
 
         init: function() {
             // Detect current tab from URL
@@ -35,6 +36,8 @@
                     var url = new URL(window.location);
                     url.searchParams.set('tab', self.currentTab);
                     window.history.replaceState({}, '', url);
+                    self.searchTerm = '';
+                    $('#dui-search').val('');
                     self.loadResults();
                     self.updateBulkBar();
                 }
@@ -129,6 +132,27 @@
             // Cron settings
             $('#dui-save-cron-btn').on('click', function() {
                 self.saveCronSettings();
+            });
+
+            // Search
+            $('#dui-search-btn').on('click', function() {
+                self.searchTerm = $('#dui-search').val().trim();
+                self.currentPage = 1;
+                self.loadResults();
+            });
+            $('#dui-search').on('keypress', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    self.searchTerm = $(this).val().trim();
+                    self.currentPage = 1;
+                    self.loadResults();
+                }
+            }).on('search', function() {
+                if ($(this).val() === '') {
+                    self.searchTerm = '';
+                    self.currentPage = 1;
+                    self.loadResults();
+                }
             });
 
             // Pagination
@@ -241,7 +265,8 @@
                 action: 'dui_get_results',
                 nonce: duiObj.nonce,
                 tab: this.currentTab,
-                page: this.currentPage
+                page: this.currentPage,
+                search: this.searchTerm
             }, function(res) {
                 if (res.success) {
                     $results.html(res.data.html).css('opacity', '1');

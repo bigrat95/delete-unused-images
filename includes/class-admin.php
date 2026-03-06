@@ -158,6 +158,10 @@ class DUI_Admin {
                     <?php endif; ?>
                     <span id="dui-selected-info" class="description" style="margin-left:8px;"></span>
                 </div>
+                <div class="alignright">
+                    <input type="search" id="dui-search" placeholder="<?php esc_attr_e('Search files...', 'delete-unused-images'); ?>" style="vertical-align:middle;">
+                    <button type="button" id="dui-search-btn" class="button"><?php _e('Search', 'delete-unused-images'); ?></button>
+                </div>
             </div>
 
             <div id="dui-results">

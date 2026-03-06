@@ -4,7 +4,7 @@ Tags: media, cleanup, unused images, media cleaner, disk space
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,11 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 
 == Changelog ==
 
+= 1.2.0 =
+* Added search box to filter images by name, filename, type, or ID
+* Search works across all tabs (Unused, Whitelist, Trash)
+* Search clears automatically when switching tabs
+
 = 1.1.0 =
 * Added "Trash All Unused" button — batch-processes all unused images with progress bar
 * Added scheduled auto-cleanup via WP-Cron (daily, twice daily, or weekly)
@@ -116,6 +121,9 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 * Native WordPress admin UI — no external dependencies
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Adds search functionality to filter images.
 
 = 1.1.0 =
 Adds Trash All button and scheduled auto-cleanup.
