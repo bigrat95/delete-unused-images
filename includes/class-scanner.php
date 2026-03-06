@@ -49,6 +49,8 @@ class DUI_Scanner {
         $this->collect_elementor_images();
         $this->collect_acf_all_fields();
         $this->collect_acf_option_pages();
+        $this->collect_taxonomy_thumbnails();
+        $this->collect_term_description_images();
         $this->collect_theme_files();
         $this->collect_css_background_images();
         $this->collect_serialized_postmeta();
@@ -739,6 +741,73 @@ class DUI_Scanner {
             }
             // Also extract numeric IDs from serialized data
             $this->extract_ids_from_serialized($val);
+        }
+    }
+
+    /**
+     * Collect taxonomy term thumbnail IDs (WooCommerce category images, etc.).
+     * These are stored as 'thumbnail_id' in wp_termmeta.
+     */
+    private function collect_taxonomy_thumbnails() {
+        global $wpdb;
+        $ids = $wpdb->get_col(
+            "SELECT DISTINCT meta_value FROM {$wpdb->termmeta}
+             WHERE meta_key = 'thumbnail_id'
+             AND meta_value > 0"
+        );
+        $this->used_ids = array_merge($this->used_ids, $ids);
+    }
+
+    /**
+     * Collect images referenced in taxonomy term descriptions.
+     * Covers product categories, product attributes (pa_finish, pa_color, etc.),
+     * post categories, tags, and any custom taxonomy.
+     */
+    private function collect_term_description_images() {
+        global $wpdb;
+        $rows = $wpdb->get_col(
+            "SELECT description FROM {$wpdb->term_taxonomy}
+             WHERE description LIKE '%wp-content/uploads%'"
+        );
+
+        foreach ($rows as $description) {
+            // Match wp-image-123 class
+            if (preg_match_all('/wp-image-(\d+)/', $description, $matches)) {
+                $this->used_ids = array_merge($this->used_ids, $matches[1]);
+            }
+            // Match image URLs in uploads
+            if (preg_match_all('#wp-content/uploads/([^\s"\'<>\)\},;]+)#', $description, $matches)) {
+                foreach ($matches[1] as $path) {
+                    $id = $this->find_attachment_by_path($path);
+                    if ($id) $this->used_ids[] = $id;
+                }
+            }
+        }
+
+        // Also check termmeta for image IDs/URLs (some plugins store images in term meta)
+        $meta_ids = $wpdb->get_col(
+            "SELECT DISTINCT meta_value FROM {$wpdb->termmeta}
+             WHERE meta_value REGEXP '^[0-9]+$'
+             AND meta_value > 0
+             AND meta_key NOT IN ('thumbnail_id', 'order', 'product_count_product_cat')
+             AND CAST(meta_value AS UNSIGNED) IN (
+                SELECT ID FROM {$wpdb->posts} WHERE post_type = 'attachment'
+             )"
+        );
+        $this->used_ids = array_merge($this->used_ids, $meta_ids);
+
+        // URLs stored in termmeta
+        $meta_urls = $wpdb->get_col(
+            "SELECT DISTINCT meta_value FROM {$wpdb->termmeta}
+             WHERE meta_value LIKE '%wp-content/uploads%'"
+        );
+        foreach ($meta_urls as $val) {
+            if (preg_match_all('#wp-content/uploads/([^\s"\'<>\)\},;]+)#', $val, $matches)) {
+                foreach ($matches[1] as $path) {
+                    $id = $this->find_attachment_by_path($path);
+                    if ($id) $this->used_ids[] = $id;
+                }
+            }
         }
     }
 
