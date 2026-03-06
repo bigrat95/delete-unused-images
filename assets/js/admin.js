@@ -614,6 +614,9 @@
                 $fill.css('width', pct + '%');
                 $text.text(pct + '% — ' + trashed + ' / ' + totalStart + ' trashed');
 
+                // Update tab counts live
+                $('#dui-unused-count').text('(' + res.data.remaining + ')');
+
                 if (res.data.done) {
                     $fill.css('width', '100%');
                     $text.text('Done! ' + totalStart + ' files moved to trash.');
@@ -672,7 +675,10 @@
                 var deleted = totalStart - res.data.remaining;
                 var pct = Math.min(100, Math.round((deleted / totalStart) * 100));
                 $fill.css('width', pct + '%');
-                $text.text(pct + '% — ' + deleted + ' / ' + totalStart + ' deleted');
+                $text.text(pct + '% — ' + deleted + ' / ' + totalStart + ' permanently deleted');
+
+                // Update trash tab count live
+                $('#dui-trash-count').text('(' + res.data.remaining + ')');
 
                 if (res.data.done) {
                     $fill.css('width', '100%');
