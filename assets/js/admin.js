@@ -310,21 +310,20 @@
                 if (res.success) {
                     $results.html(res.data.html).css('opacity', '1');
                     $('#dui-stats').html(res.data.stats);
-                    self.buildPagination();
+                    self.buildPagination(res.data.total_pages || 0, res.data.total_items || 0);
                     self.updateTabCounts();
-                    // Uncheck select all
                     $('#dui-select-all, .dui-select-all-header').prop('checked', false);
                     self.updateSelectedInfo();
                 }
             });
         },
 
-        buildPagination: function() {
+        buildPagination: function(totalPages, totalItems) {
             var $pag = $('#dui-pagination');
-            var el = $pag[0];
-            var totalPages = parseInt(el && el.dataset.totalPages) || 0;
+            if (!$pag.length) return;
+            totalPages = totalPages || 0;
+            totalItems = totalItems || 0;
             var currentPage = this.currentPage;
-            var totalItems = parseInt(el && el.dataset.totalItems) || 0;
 
             $pag.empty();
 

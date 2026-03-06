@@ -411,7 +411,7 @@ class DUI_Admin {
 
         echo '</tbody></table>';
 
-        echo '<script>document.getElementById("dui-pagination").dataset.totalPages = ' . (int) $total_pages . '; document.getElementById("dui-pagination").dataset.currentPage = ' . (int) $page . '; document.getElementById("dui-pagination").dataset.totalItems = ' . (int) $total_items . ';</script>';
+        echo '<div id="dui-pag-data" data-total-pages="' . (int) $total_pages . '" data-current-page="' . (int) $page . '" data-total-items="' . (int) $total_items . '" style="display:none;"></div>';
     }
 
     private static function sort_indicator($col, $orderby, $order) {
@@ -547,8 +547,11 @@ class DUI_Admin {
         $stats_html = ob_get_clean();
 
         wp_send_json_success([
-            'html'  => $html,
-            'stats' => $stats_html,
+            'html'        => $html,
+            'stats'       => $stats_html,
+            'total_pages' => $total_pages ?? 0,
+            'total_items' => $total_items ?? 0,
+            'page'        => $page,
         ]);
     }
 
