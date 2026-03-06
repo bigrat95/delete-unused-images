@@ -137,6 +137,12 @@
                 self.trashAll();
             });
 
+            // Empty Trash
+            $('#dui-empty-trash-btn').on('click', function() {
+                if (!confirm(duiObj.strings.confirm_empty_trash)) return;
+                self.emptyTrash();
+            });
+
             // Cron settings
             $('#dui-save-cron-btn').on('click', function() {
                 self.saveCronSettings();
@@ -629,6 +635,66 @@
 
         resetTrashAllUI: function() {
             $('#dui-trash-all-btn').prop('disabled', false).text('Trash All Unused');
+        },
+
+        emptyTrash: function() {
+            var self = this;
+            var $btn = $('#dui-empty-trash-btn');
+            var $progress = $('#dui-progress-wrap');
+            var $fill = $('#dui-progress-fill');
+            var $text = $('#dui-progress-text');
+            var totalStart = 0;
+
+            $btn.prop('disabled', true).text('Deleting...');
+            $progress.show();
+            $fill.css('width', '0%');
+            $text.text('Starting...');
+
+            self.emptyTrashBatch(totalStart);
+        },
+
+        emptyTrashBatch: function(totalStart) {
+            var self = this;
+            var $fill = $('#dui-progress-fill');
+            var $text = $('#dui-progress-text');
+
+            $.post(duiObj.ajaxurl, {
+                action: 'dui_empty_trash_batch',
+                nonce: duiObj.nonce
+            }, function(res) {
+                if (!res.success) {
+                    self.toast('Error deleting files', 'error');
+                    self.resetEmptyTrashUI();
+                    return;
+                }
+
+                if (totalStart === 0) totalStart = res.data.total || 1;
+                var deleted = totalStart - res.data.remaining;
+                var pct = Math.min(100, Math.round((deleted / totalStart) * 100));
+                $fill.css('width', pct + '%');
+                $text.text(pct + '% — ' + deleted + ' / ' + totalStart + ' deleted');
+
+                if (res.data.done) {
+                    $fill.css('width', '100%');
+                    $text.text('Done! ' + totalStart + ' files permanently deleted.');
+                    self.toast(totalStart + ' files permanently deleted.', 'success');
+                    self.currentPage = 1;
+                    self.loadResults();
+                    setTimeout(function() {
+                        $('#dui-progress-wrap').fadeOut();
+                        self.resetEmptyTrashUI();
+                    }, 3000);
+                } else {
+                    self.emptyTrashBatch(totalStart);
+                }
+            }).fail(function() {
+                self.toast('Network error', 'error');
+                self.resetEmptyTrashUI();
+            });
+        },
+
+        resetEmptyTrashUI: function() {
+            $('#dui-empty-trash-btn').prop('disabled', false).text('Empty Trash');
         },
 
         saveCronSettings: function() {

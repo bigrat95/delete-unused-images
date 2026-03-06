@@ -23,6 +23,7 @@ class DUI_Admin {
         add_action('wp_ajax_dui_restore_single', [__CLASS__, 'ajax_restore_single']);
         add_action('wp_ajax_dui_restore_bulk', [__CLASS__, 'ajax_restore_bulk']);
         add_action('wp_ajax_dui_save_cron_settings', [__CLASS__, 'ajax_save_cron_settings']);
+        add_action('wp_ajax_dui_empty_trash_batch', [__CLASS__, 'ajax_empty_trash_batch']);
 
         // Cron hook
         add_action('dui_scheduled_cleanup', [__CLASS__, 'run_scheduled_cleanup']);
@@ -84,6 +85,7 @@ class DUI_Admin {
                 'confirm_bulk_delete' => __('Permanently delete all selected files? This cannot be undone.', 'delete-unused-images'),
                 'no_selection'        => __('No files selected.', 'delete-unused-images'),
                 'confirm_trash_all'   => __('Trash ALL unused images? This will process all pages in batches.', 'delete-unused-images'),
+                'confirm_empty_trash' => __('Permanently delete ALL trashed files? This cannot be undone.', 'delete-unused-images'),
             ],
         ]);
     }
@@ -158,6 +160,7 @@ class DUI_Admin {
                     <?php elseif ($tab === 'trash'): ?>
                         <button type="button" class="button" id="dui-bulk-restore-btn"><?php esc_html_e('Restore Selected', 'delete-unused-images'); ?></button>
                         <button type="button" class="button" id="dui-bulk-delete-btn"><?php esc_html_e('Delete Permanently', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-empty-trash-btn" style="color:#b32d2e;"><?php esc_html_e('Empty Trash', 'delete-unused-images'); ?></button>
                     <?php endif; ?>
                     <span id="dui-selected-info" class="description" style="margin-left:8px;"></span>
                 </div>
@@ -819,6 +822,44 @@ class DUI_Admin {
             'trashed'   => $trashed,
             'remaining' => max(0, $remaining),
             'total'     => $total,
+            'done'      => $remaining <= 0,
+        ]);
+    }
+
+    /**
+     * Empty trash: permanently delete trashed attachments in batches.
+     */
+    public static function ajax_empty_trash_batch() {
+        self::verify_request();
+
+        global $wpdb;
+        $batch_size = 50;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $trashed_ids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+             WHERE post_type = 'attachment'
+             AND post_status = 'trash'
+             ORDER BY ID ASC
+             LIMIT %d",
+            $batch_size
+        ) );
+
+        $total_trashed = (int) wp_count_posts('attachment')->trash;
+        $deleted = 0;
+
+        foreach ($trashed_ids as $id) {
+            if (wp_delete_attachment((int) $id, true)) {
+                $deleted++;
+            }
+        }
+
+        $remaining = max(0, $total_trashed - $deleted);
+
+        wp_send_json_success([
+            'deleted'   => $deleted,
+            'remaining' => $remaining,
+            'total'     => $total_trashed,
             'done'      => $remaining <= 0,
         ]);
     }

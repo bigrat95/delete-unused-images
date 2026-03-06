@@ -1,0 +1,6 @@
+# Exclude dev files from GitHub zip downloads (Code > Download ZIP)
+.git export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.github export-ignore
+README.md export-ignore
