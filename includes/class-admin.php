@@ -567,6 +567,12 @@ class DUI_Admin {
         self::render_results_table($tab, $page, $per_page, $search, $orderby, $order, $filter_type);
         $html = ob_get_clean();
 
+        // Extract pagination data from hidden div
+        $total_pages = 0;
+        $total_items = 0;
+        if (preg_match('/data-total-pages="(\d+)"/', $html, $m)) $total_pages = (int) $m[1];
+        if (preg_match('/data-total-items="(\d+)"/', $html, $m)) $total_items = (int) $m[1];
+
         ob_start();
         self::render_stats();
         $stats_html = ob_get_clean();
@@ -574,8 +580,8 @@ class DUI_Admin {
         wp_send_json_success([
             'html'        => $html,
             'stats'       => $stats_html,
-            'total_pages' => $total_pages ?? 0,
-            'total_items' => $total_items ?? 0,
+            'total_pages' => $total_pages,
+            'total_items' => $total_items,
             'page'        => $page,
         ]);
     }
