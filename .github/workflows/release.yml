@@ -1,0 +1,41 @@
+name: Build Release ZIP
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create clean plugin directory
+        run: |
+          mkdir -p build/delete-unused-images
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='README.md' \
+            --exclude='node_modules' \
+            --exclude='.idea' \
+            --exclude='.vscode' \
+            --exclude='*Zone.Identifier' \
+            ./ build/delete-unused-images/
+
+      - name: Create ZIP
+        run: |
+          cd build
+          zip -r ../delete-unused-images.zip delete-unused-images/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: delete-unused-images.zip
+          generate_release_notes: true
