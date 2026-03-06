@@ -590,6 +590,7 @@ class DUI_Admin {
             'total_pages' => $total_pages,
             'total_items' => $total_items,
             'page'        => $page,
+            'trash_count' => (int) wp_count_posts('attachment')->trash,
         ]);
     }
 

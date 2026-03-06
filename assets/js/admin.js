@@ -311,7 +311,7 @@
                     $results.html(res.data.html).css('opacity', '1');
                     $('#dui-stats').html(res.data.stats);
                     self.buildPagination(res.data.total_pages || 0, res.data.total_items || 0);
-                    self.updateTabCounts();
+                    self.updateTabCounts(res.data.trash_count);
                     $('#dui-select-all, .dui-select-all-header').prop('checked', false);
                     self.updateSelectedInfo();
                 }
@@ -355,12 +355,15 @@
             $pag.append('<span class="dui-page-info">' + totalItems + ' items</span>');
         },
 
-        updateTabCounts: function() {
+        updateTabCounts: function(trashCount) {
             var $cells = $('#dui-stats .form-table td strong');
             var unused = $cells.eq(2).text().replace(/,/g, '') || '0';
             var whitelist = $cells.eq(4).text().replace(/,/g, '') || '0';
             $('#dui-unused-count').text('(' + unused + ')');
             $('#dui-whitelist-count').text('(' + whitelist + ')');
+            if (typeof trashCount !== 'undefined') {
+                $('#dui-trash-count').text('(' + trashCount + ')');
+            }
         },
 
         updateBulkBar: function() {
