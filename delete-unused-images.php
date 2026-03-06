@@ -3,7 +3,7 @@
  * Plugin Name: Delete Unused Images
  * Plugin URI: https://github.com/bigrat95/delete-unused-images
  * Description: Scan and remove unused media files from your WordPress site to free up disk space. Deep scans post content, ACF fields, WooCommerce, Elementor, theme files, widgets, and more.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: Olivier Bigras
@@ -16,7 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-define('DUI_VERSION', '1.3.0');
+define('DUI_VERSION', '1.4.0');
 define('DUI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('DUI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('DUI_BASENAME', plugin_basename(__FILE__));

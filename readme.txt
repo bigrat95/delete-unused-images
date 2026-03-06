@@ -4,7 +4,7 @@ Tags: media, cleanup, unused images, media cleaner, disk space
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,15 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 
 == Changelog ==
 
+= 1.4.0 =
+* Fixed all WordPress Plugin Check errors
+* Proper output escaping (esc_html_e, esc_html__, esc_html)
+* Translators comments for all placeholder strings
+* Ordered placeholders (%1$d, %2$d) for multi-placeholder strings
+* Fixed SQL preparation: inline $wpdb->prepare(), esc_like() for LIKE queries
+* Dynamic file type filter (only shows detected extensions)
+* Per-page selector (20, 50, 100)
+
 = 1.3.0 =
 * Clickable column headers to sort by Name, Size, Type, or Date (asc/desc)
 * File type filter dropdown (JPG, PNG, GIF, WebP, SVG, PDF, MP4)
@@ -127,6 +136,9 @@ No. The plugin uses WordPress options only. Clean and lightweight.
 * Native WordPress admin UI — no external dependencies
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+Fixes all WordPress Plugin Check errors for WP.org compliance.
 
 = 1.3.0 =
 Adds column sorting and file type filter.

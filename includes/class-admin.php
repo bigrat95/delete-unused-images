@@ -99,7 +99,7 @@ class DUI_Admin {
         $base_url = admin_url('upload.php?page=delete-unused-images');
         ?>
         <div class="wrap">
-            <h1><?php _e('Delete Unused Images', 'delete-unused-images'); ?></h1>
+            <h1><?php esc_html_e('Delete Unused Images', 'delete-unused-images'); ?></h1>
 
             <div class="postbox" style="margin-top:20px;">
                 <div class="inside" id="dui-stats">
@@ -109,11 +109,14 @@ class DUI_Admin {
 
             <p>
                 <button type="button" id="dui-scan-btn" class="button button-primary">
-                    <?php _e('Scan for Unused Media', 'delete-unused-images'); ?>
+                    <?php esc_html_e('Scan for Unused Media', 'delete-unused-images'); ?>
                 </button>
                 <?php if ($scan_date): ?>
                     <span class="description" style="margin-left:10px;">
-                        <?php printf(__('Last scan: %s', 'delete-unused-images'), date_i18n('M j, Y g:i a', strtotime($scan_date))); ?>
+                        <?php
+                        /* translators: %s: date and time of last scan */
+                        printf( esc_html__( 'Last scan: %s', 'delete-unused-images' ), esc_html( date_i18n( 'M j, Y g:i a', strtotime( $scan_date ) ) ) );
+                        ?>
                     </span>
                 <?php endif; ?>
             </p>
@@ -128,33 +131,33 @@ class DUI_Admin {
             <nav class="nav-tab-wrapper">
                 <a href="<?php echo esc_url($base_url . '&tab=unused'); ?>"
                    class="nav-tab <?php echo $tab === 'unused' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('Unused', 'delete-unused-images'); ?>
+                    <?php esc_html_e('Unused', 'delete-unused-images'); ?>
                     <span class="count" id="dui-unused-count">(0)</span>
                 </a>
                 <a href="<?php echo esc_url($base_url . '&tab=whitelist'); ?>"
                    class="nav-tab <?php echo $tab === 'whitelist' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('Whitelist', 'delete-unused-images'); ?>
+                    <?php esc_html_e('Whitelist', 'delete-unused-images'); ?>
                     <span class="count" id="dui-whitelist-count">(<?php echo count($whitelist); ?>)</span>
                 </a>
                 <a href="<?php echo esc_url($base_url . '&tab=trash'); ?>"
                    class="nav-tab <?php echo $tab === 'trash' ? 'nav-tab-active' : ''; ?>">
-                    <?php _e('Trash', 'delete-unused-images'); ?>
-                    <span class="count" id="dui-trash-count">(<?php echo wp_count_posts('attachment')->trash; ?>)</span>
+                    <?php esc_html_e('Trash', 'delete-unused-images'); ?>
+                    <span class="count" id="dui-trash-count">(<?php echo esc_html( wp_count_posts('attachment')->trash ); ?>)</span>
                 </a>
             </nav>
 
             <div class="tablenav top">
                 <div class="alignleft actions">
-                    <label><input type="checkbox" id="dui-select-all"> <?php _e('Select All', 'delete-unused-images'); ?></label>
+                    <label><input type="checkbox" id="dui-select-all"> <?php esc_html_e('Select All', 'delete-unused-images'); ?></label>
                     <?php if ($tab === 'unused'): ?>
-                        <button type="button" class="button" id="dui-bulk-trash-btn"><?php _e('Trash Selected', 'delete-unused-images'); ?></button>
-                        <button type="button" class="button" id="dui-bulk-whitelist-btn"><?php _e('Whitelist Selected', 'delete-unused-images'); ?></button>
-                        <button type="button" class="button" id="dui-trash-all-btn" style="color:#b32d2e;"><?php _e('Trash All Unused', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-bulk-trash-btn"><?php esc_html_e('Trash Selected', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-bulk-whitelist-btn"><?php esc_html_e('Whitelist Selected', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-trash-all-btn" style="color:#b32d2e;"><?php esc_html_e('Trash All Unused', 'delete-unused-images'); ?></button>
                     <?php elseif ($tab === 'whitelist'): ?>
-                        <button type="button" class="button" id="dui-bulk-remove-whitelist-btn"><?php _e('Remove from Whitelist', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-bulk-remove-whitelist-btn"><?php esc_html_e('Remove from Whitelist', 'delete-unused-images'); ?></button>
                     <?php elseif ($tab === 'trash'): ?>
-                        <button type="button" class="button" id="dui-bulk-restore-btn"><?php _e('Restore Selected', 'delete-unused-images'); ?></button>
-                        <button type="button" class="button" id="dui-bulk-delete-btn"><?php _e('Delete Permanently', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-bulk-restore-btn"><?php esc_html_e('Restore Selected', 'delete-unused-images'); ?></button>
+                        <button type="button" class="button" id="dui-bulk-delete-btn"><?php esc_html_e('Delete Permanently', 'delete-unused-images'); ?></button>
                     <?php endif; ?>
                     <span id="dui-selected-info" class="description" style="margin-left:8px;"></span>
                 </div>
@@ -176,7 +179,7 @@ class DUI_Admin {
                     ];
                     ?>
                     <select id="dui-filter-type" style="vertical-align:middle;">
-                        <option value=""><?php _e('All Types', 'delete-unused-images'); ?></option>
+                        <option value=""><?php esc_html_e('All Types', 'delete-unused-images'); ?></option>
                         <?php foreach ($groups as $label => $exts):
                             $group_items = array_intersect_key($found_exts, array_flip($exts));
                             if (empty($group_items)) continue;
@@ -199,7 +202,7 @@ class DUI_Admin {
                         <?php endif; ?>
                     </select>
                     <input type="search" id="dui-search" placeholder="<?php esc_attr_e('Search files...', 'delete-unused-images'); ?>" style="vertical-align:middle;">
-                    <button type="button" id="dui-search-btn" class="button"><?php _e('Search', 'delete-unused-images'); ?></button>
+                    <button type="button" id="dui-search-btn" class="button"><?php esc_html_e('Search', 'delete-unused-images'); ?></button>
                 </div>
             </div>
 
@@ -209,13 +212,13 @@ class DUI_Admin {
 
             <div class="tablenav bottom">
                 <div class="alignleft actions">
-                    <label><?php _e('Show', 'delete-unused-images'); ?>
+                    <label><?php esc_html_e('Show', 'delete-unused-images'); ?>
                         <select id="dui-per-page" style="vertical-align:middle;">
                             <option value="20">20</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <?php _e('per page', 'delete-unused-images'); ?>
+                        <?php esc_html_e('per page', 'delete-unused-images'); ?>
                     </label>
                 </div>
                 <div class="alignright" id="dui-pagination"></div>
@@ -223,7 +226,7 @@ class DUI_Admin {
             </div>
 
             <div class="postbox" style="margin-top:30px;">
-                <div class="postbox-header"><h2 style="padding:8px 12px;margin:0;"><?php _e('Scheduled Auto-Cleanup', 'delete-unused-images'); ?></h2></div>
+                <div class="postbox-header"><h2 style="padding:8px 12px;margin:0;"><?php esc_html_e('Scheduled Auto-Cleanup', 'delete-unused-images'); ?></h2></div>
                 <div class="inside">
                     <?php
                     $cron_enabled = get_option('dui_cron_enabled', false);
@@ -232,35 +235,35 @@ class DUI_Admin {
                     ?>
                     <table class="form-table">
                         <tr>
-                            <th><?php _e('Enable Auto-Cleanup', 'delete-unused-images'); ?></th>
+                            <th><?php esc_html_e('Enable Auto-Cleanup', 'delete-unused-images'); ?></th>
                             <td>
                                 <label>
                                     <input type="checkbox" id="dui-cron-enabled" <?php checked($cron_enabled); ?>>
-                                    <?php _e('Automatically scan and trash unused images on a schedule', 'delete-unused-images'); ?>
+                                    <?php esc_html_e('Automatically scan and trash unused images on a schedule', 'delete-unused-images'); ?>
                                 </label>
                             </td>
                         </tr>
                         <tr>
-                            <th><?php _e('Frequency', 'delete-unused-images'); ?></th>
+                            <th><?php esc_html_e('Frequency', 'delete-unused-images'); ?></th>
                             <td>
                                 <select id="dui-cron-frequency">
-                                    <option value="daily" <?php selected($cron_frequency, 'daily'); ?>><?php _e('Daily', 'delete-unused-images'); ?></option>
-                                    <option value="twicedaily" <?php selected($cron_frequency, 'twicedaily'); ?>><?php _e('Twice Daily', 'delete-unused-images'); ?></option>
-                                    <option value="weekly" <?php selected($cron_frequency, 'weekly'); ?>><?php _e('Weekly', 'delete-unused-images'); ?></option>
+                                    <option value="daily" <?php selected($cron_frequency, 'daily'); ?>><?php esc_html_e('Daily', 'delete-unused-images'); ?></option>
+                                    <option value="twicedaily" <?php selected($cron_frequency, 'twicedaily'); ?>><?php esc_html_e('Twice Daily', 'delete-unused-images'); ?></option>
+                                    <option value="weekly" <?php selected($cron_frequency, 'weekly'); ?>><?php esc_html_e('Weekly', 'delete-unused-images'); ?></option>
                                 </select>
                             </td>
                         </tr>
                         <tr>
-                            <th><?php _e('Next Scheduled Run', 'delete-unused-images'); ?></th>
+                            <th><?php esc_html_e('Next Scheduled Run', 'delete-unused-images'); ?></th>
                             <td>
                                 <span id="dui-next-run">
-                                    <?php echo $next_run ? date_i18n('M j, Y g:i a', $next_run) : __('Not scheduled', 'delete-unused-images'); ?>
+                                    <?php echo $next_run ? esc_html( date_i18n('M j, Y g:i a', $next_run) ) : esc_html__('Not scheduled', 'delete-unused-images'); ?>
                                 </span>
                             </td>
                         </tr>
                     </table>
                     <p>
-                        <button type="button" id="dui-save-cron-btn" class="button button-primary"><?php _e('Save Settings', 'delete-unused-images'); ?></button>
+                        <button type="button" id="dui-save-cron-btn" class="button button-primary"><?php esc_html_e('Save Settings', 'delete-unused-images'); ?></button>
                     </p>
                 </div>
             </div>
@@ -284,18 +287,18 @@ class DUI_Admin {
         ?>
         <table class="form-table">
             <tr>
-                <th><?php _e('Total Media', 'delete-unused-images'); ?></th>
-                <td><strong><?php echo number_format_i18n($total); ?></strong></td>
-                <th><?php _e('In Use', 'delete-unused-images'); ?></th>
-                <td><strong><?php echo number_format_i18n($used_count); ?></strong></td>
-                <th><?php _e('Unused', 'delete-unused-images'); ?></th>
-                <td><strong><?php echo number_format_i18n($unused_count); ?></strong></td>
+                <th><?php esc_html_e('Total Media', 'delete-unused-images'); ?></th>
+                <td><strong><?php echo esc_html( number_format_i18n($total) ); ?></strong></td>
+                <th><?php esc_html_e('In Use', 'delete-unused-images'); ?></th>
+                <td><strong><?php echo esc_html( number_format_i18n($used_count) ); ?></strong></td>
+                <th><?php esc_html_e('Unused', 'delete-unused-images'); ?></th>
+                <td><strong><?php echo esc_html( number_format_i18n($unused_count) ); ?></strong></td>
             </tr>
             <tr>
-                <th><?php _e('Space to Free', 'delete-unused-images'); ?></th>
-                <td><strong><?php echo size_format($unused_size); ?></strong></td>
-                <th><?php _e('Whitelisted', 'delete-unused-images'); ?></th>
-                <td><strong><?php echo number_format_i18n(count($whitelist)); ?></strong></td>
+                <th><?php esc_html_e('Space to Free', 'delete-unused-images'); ?></th>
+                <td><strong><?php echo esc_html( size_format($unused_size) ); ?></strong></td>
+                <th><?php esc_html_e('Whitelisted', 'delete-unused-images'); ?></th>
+                <td><strong><?php echo esc_html( number_format_i18n(count($whitelist)) ); ?></strong></td>
                 <td colspan="2"></td>
             </tr>
         </table>
@@ -383,11 +386,11 @@ class DUI_Admin {
         if (empty($items)) {
             echo '<p class="description">';
             if ($tab === 'unused') {
-                _e('No unused media found. Run a scan to detect unused files.', 'delete-unused-images');
+                esc_html_e('No unused media found. Run a scan to detect unused files.', 'delete-unused-images');
             } elseif ($tab === 'whitelist') {
-                _e('No whitelisted items.', 'delete-unused-images');
+                esc_html_e('No whitelisted items.', 'delete-unused-images');
             } else {
-                _e('Trash is empty.', 'delete-unused-images');
+                esc_html_e('Trash is empty.', 'delete-unused-images');
             }
             echo '</p>';
             return;
@@ -396,12 +399,12 @@ class DUI_Admin {
         echo '<table class="widefat striped">';
         echo '<thead><tr>';
         echo '<th class="check-column"><input type="checkbox" class="dui-select-all-header"></th>';
-        echo '<th>' . __('File', 'delete-unused-images') . '</th>';
-        echo '<th class="dui-sortable" data-sort="name" style="cursor:pointer;">' . __('Name', 'delete-unused-images') . self::sort_indicator('name', $orderby, $order) . '</th>';
-        echo '<th class="dui-sortable" data-sort="size" style="cursor:pointer;">' . __('Size', 'delete-unused-images') . self::sort_indicator('size', $orderby, $order) . '</th>';
-        echo '<th class="dui-sortable" data-sort="type" style="cursor:pointer;">' . __('Type', 'delete-unused-images') . self::sort_indicator('type', $orderby, $order) . '</th>';
-        echo '<th class="dui-sortable" data-sort="date" style="cursor:pointer;">' . __('Date', 'delete-unused-images') . self::sort_indicator('date', $orderby, $order) . '</th>';
-        echo '<th>' . __('Actions', 'delete-unused-images') . '</th>';
+        echo '<th>' . esc_html__('File', 'delete-unused-images') . '</th>';
+        echo '<th class="dui-sortable" data-sort="name" style="cursor:pointer;">' . esc_html__('Name', 'delete-unused-images') . wp_kses_post( self::sort_indicator('name', $orderby, $order) ) . '</th>';
+        echo '<th class="dui-sortable" data-sort="size" style="cursor:pointer;">' . esc_html__('Size', 'delete-unused-images') . wp_kses_post( self::sort_indicator('size', $orderby, $order) ) . '</th>';
+        echo '<th class="dui-sortable" data-sort="type" style="cursor:pointer;">' . esc_html__('Type', 'delete-unused-images') . wp_kses_post( self::sort_indicator('type', $orderby, $order) ) . '</th>';
+        echo '<th class="dui-sortable" data-sort="date" style="cursor:pointer;">' . esc_html__('Date', 'delete-unused-images') . wp_kses_post( self::sort_indicator('date', $orderby, $order) ) . '</th>';
+        echo '<th>' . esc_html__('Actions', 'delete-unused-images') . '</th>';
         echo '</tr></thead><tbody>';
 
         foreach ($items as $item) {
@@ -413,7 +416,7 @@ class DUI_Admin {
 
             echo '<tr data-id="' . esc_attr($id) . '" data-size="' . esc_attr($item['file_size']) . '">';
             echo '<th class="check-column"><input type="checkbox" class="dui-item-cb" value="' . esc_attr($id) . '" data-size="' . esc_attr($item['file_size']) . '"></th>';
-            echo '<td>' . $thumb . '</td>';
+            echo '<td>' . wp_kses_post( $thumb ) . '</td>';
             echo '<td><strong>' . esc_html($item['title']) . '</strong><br><span class="description">' . esc_html(wp_basename($item['url'] ?? '')) . '</span></td>';
             echo '<td>' . esc_html($size_formatted) . '</td>';
             echo '<td><code>' . esc_html(strtoupper($item['ext'])) . '</code></td>';
@@ -421,16 +424,16 @@ class DUI_Admin {
             echo '<td>';
 
             if ($tab === 'unused') {
-                echo '<a href="' . esc_url($item['url']) . '" target="_blank" class="button button-small">' . __('View', 'delete-unused-images') . '</a> ';
-                echo '<a href="' . esc_url($edit_url) . '" target="_blank" class="button button-small">' . __('Edit', 'delete-unused-images') . '</a> ';
-                echo '<button type="button" class="button button-small dui-whitelist-btn" data-id="' . esc_attr($id) . '">' . __('Whitelist', 'delete-unused-images') . '</button> ';
-                echo '<button type="button" class="button button-small dui-trash-btn" data-id="' . esc_attr($id) . '" data-size="' . esc_attr($item['file_size']) . '">' . __('Trash', 'delete-unused-images') . '</button>';
+                echo '<a href="' . esc_url($item['url']) . '" target="_blank" class="button button-small">' . esc_html__('View', 'delete-unused-images') . '</a> ';
+                echo '<a href="' . esc_url($edit_url) . '" target="_blank" class="button button-small">' . esc_html__('Edit', 'delete-unused-images') . '</a> ';
+                echo '<button type="button" class="button button-small dui-whitelist-btn" data-id="' . esc_attr($id) . '">' . esc_html__('Whitelist', 'delete-unused-images') . '</button> ';
+                echo '<button type="button" class="button button-small dui-trash-btn" data-id="' . esc_attr($id) . '" data-size="' . esc_attr($item['file_size']) . '">' . esc_html__('Trash', 'delete-unused-images') . '</button>';
             } elseif ($tab === 'whitelist') {
-                echo '<a href="' . esc_url($item['url']) . '" target="_blank" class="button button-small">' . __('View', 'delete-unused-images') . '</a> ';
-                echo '<button type="button" class="button button-small dui-remove-whitelist-btn" data-id="' . esc_attr($id) . '">' . __('Remove', 'delete-unused-images') . '</button>';
+                echo '<a href="' . esc_url($item['url']) . '" target="_blank" class="button button-small">' . esc_html__('View', 'delete-unused-images') . '</a> ';
+                echo '<button type="button" class="button button-small dui-remove-whitelist-btn" data-id="' . esc_attr($id) . '">' . esc_html__('Remove', 'delete-unused-images') . '</button>';
             } elseif ($tab === 'trash') {
-                echo '<button type="button" class="button button-small dui-restore-btn" data-id="' . esc_attr($id) . '">' . __('Restore', 'delete-unused-images') . '</button> ';
-                echo '<button type="button" class="button button-small dui-delete-btn" data-id="' . esc_attr($id) . '" data-size="' . esc_attr($item['file_size']) . '" style="color:#b32d2e;">' . __('Delete', 'delete-unused-images') . '</button>';
+                echo '<button type="button" class="button button-small dui-restore-btn" data-id="' . esc_attr($id) . '">' . esc_html__('Restore', 'delete-unused-images') . '</button> ';
+                echo '<button type="button" class="button button-small dui-delete-btn" data-id="' . esc_attr($id) . '" data-size="' . esc_attr($item['file_size']) . '" style="color:#b32d2e;">' . esc_html__('Delete', 'delete-unused-images') . '</button>';
             }
 
             echo '</td>';
@@ -487,7 +490,8 @@ class DUI_Admin {
         wp_send_json_success([
             'total'    => $total,
             'used'     => count($used_ids),
-            'message'  => sprintf(__('Found %d used media. Scanning %d total attachments...', 'delete-unused-images'), count($used_ids), $total),
+            /* translators: %1$d: number of used media, %2$d: total attachments */
+            'message'  => sprintf(__('Found %1$d used media. Scanning %2$d total attachments...', 'delete-unused-images'), count($used_ids), $total),
         ]);
     }
 
@@ -622,6 +626,7 @@ class DUI_Admin {
         }
 
         wp_send_json_success([
+            /* translators: %d: number of files trashed */
             'message' => sprintf(__('%d files moved to trash.', 'delete-unused-images'), $trashed),
             'count'   => $trashed,
         ]);
@@ -660,6 +665,7 @@ class DUI_Admin {
         }
 
         wp_send_json_success([
+            /* translators: %d: number of files deleted */
             'message' => sprintf(__('%d files permanently deleted.', 'delete-unused-images'), $deleted),
             'count'   => $deleted,
         ]);
@@ -702,6 +708,7 @@ class DUI_Admin {
         update_option('dui_whitelist', $whitelist, false);
 
         wp_send_json_success([
+            /* translators: %d: number of items added */
             'message' => sprintf(__('%d items added to whitelist.', 'delete-unused-images'), $added),
             'count'   => $added,
         ]);
@@ -735,6 +742,7 @@ class DUI_Admin {
         update_option('dui_whitelist', $whitelist, false);
 
         wp_send_json_success([
+            /* translators: %d: number of items removed */
             'message' => sprintf(__('%d items removed from whitelist.', 'delete-unused-images'), count($ids)),
             'count'   => count($ids),
         ]);
@@ -771,6 +779,7 @@ class DUI_Admin {
         }
 
         wp_send_json_success([
+            /* translators: %d: number of files restored */
             'message' => sprintf(__('%d files restored.', 'delete-unused-images'), $restored),
             'count'   => $restored,
         ]);
@@ -840,7 +849,8 @@ class DUI_Admin {
 
         wp_send_json_success([
             'message'  => $enabled
-                ? sprintf(__('Auto-cleanup enabled (%s). Next run: %s', 'delete-unused-images'), $frequency, $next_run)
+                /* translators: %1$s: frequency, %2$s: next run date */
+                ? sprintf(__('Auto-cleanup enabled (%1$s). Next run: %2$s', 'delete-unused-images'), $frequency, $next_run)
                 : __('Auto-cleanup disabled.', 'delete-unused-images'),
             'next_run' => $next_run ?: __('Not scheduled', 'delete-unused-images'),
         ]);

@@ -369,27 +369,27 @@ class DUI_Scanner {
         $image_file_keys = array_merge($image_keys, $file_keys);
         if (!empty($image_file_keys)) {
             $placeholders = implode(',', array_fill(0, count($image_file_keys), '%s'));
-            $query = $this->wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            $ids = $this->wpdb->get_col( $this->wpdb->prepare(
                 "SELECT DISTINCT meta_value FROM {$this->wpdb->postmeta}
                  WHERE meta_key IN ($placeholders)
                  AND meta_value REGEXP '^[0-9]+$'
                  AND meta_value > 0",
                 ...$image_file_keys
-            );
-            $ids = $this->wpdb->get_col($query);
+            ) );
             $this->used_ids = array_merge($this->used_ids, $ids);
         }
 
         // 3. Gallery fields (stored as serialized array of attachment IDs)
         if (!empty($gallery_keys)) {
             $placeholders = implode(',', array_fill(0, count($gallery_keys), '%s'));
-            $query = $this->wpdb->prepare(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            $rows = $this->wpdb->get_col( $this->wpdb->prepare(
                 "SELECT meta_value FROM {$this->wpdb->postmeta}
                  WHERE meta_key IN ($placeholders)
                  AND meta_value != ''",
                 ...$gallery_keys
-            );
-            $rows = $this->wpdb->get_col($query);
+            ) );
             foreach ($rows as $val) {
                 $data = @unserialize($val);
                 if (is_array($data)) {
@@ -425,13 +425,14 @@ class DUI_Scanner {
         // 6. ACF URL-based return format (image field returns URL string)
         if (!empty($image_file_keys)) {
             $placeholders = implode(',', array_fill(0, count($image_file_keys), '%s'));
-            $query = $this->wpdb->prepare(
+            $like_uploads = '%' . $this->wpdb->esc_like('wp-content/uploads') . '%';
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+            $urls = $this->wpdb->get_col( $this->wpdb->prepare(
                 "SELECT DISTINCT meta_value FROM {$this->wpdb->postmeta}
                  WHERE meta_key IN ($placeholders)
-                 AND meta_value LIKE '%wp-content/uploads%'",
-                ...$image_file_keys
-            );
-            $urls = $this->wpdb->get_col($query);
+                 AND meta_value LIKE %s",
+                ...array_merge($image_file_keys, [$like_uploads])
+            ) );
             foreach ($urls as $url) {
                 if (preg_match('#wp-content/uploads/([^\s"\'\'<>,;}\]]+)#', $url, $m)) {
                     $id = $this->find_attachment_by_path($m[1]);
@@ -566,11 +567,14 @@ class DUI_Scanner {
         if (!function_exists('acf_get_field_groups')) return;
 
         // ACF options are stored in wp_options as options_{field_name}
-        $rows = $this->wpdb->get_results(
+        $like_options = $this->wpdb->esc_like('options_') . '%';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rows = $this->wpdb->get_results( $this->wpdb->prepare(
             "SELECT option_name, option_value FROM {$this->wpdb->options}
-             WHERE option_name LIKE 'options\_%'
-             AND option_value != ''"
-        );
+             WHERE option_name LIKE %s
+             AND option_value != ''",
+            $like_options
+        ) );
 
         foreach ($rows as $row) {
             $val = $row->option_value;
