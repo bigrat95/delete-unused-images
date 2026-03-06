@@ -402,9 +402,11 @@ class DUI_Admin {
     }
 
     private static function sort_indicator($col, $orderby, $order) {
-        if ($col !== $orderby) return ' <span class="dashicons dashicons-sort" style="font-size:14px;width:14px;height:14px;color:#c3c4c7;vertical-align:middle;"></span>';
-        $icon = $order === 'asc' ? 'dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
-        return ' <span class="dashicons ' . $icon . '" style="font-size:14px;width:14px;height:14px;vertical-align:middle;"></span>';
+        if ($col !== $orderby) {
+            return ' <span style="color:#c3c4c7;">&#x25B5;&#x25BF;</span>';
+        }
+        $arrow = $order === 'asc' ? '&#x25B4;' : '&#x25BE;';
+        return ' <span>' . $arrow . '</span>';
     }
 
     private static function get_thumb_html($item) {
