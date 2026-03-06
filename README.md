@@ -1,11 +1,24 @@
-# Delete Unused Images
+<p align="center">
+  <img src="assets/images/banner-772x250.png" alt="Delete Unused Images Banner" width="772">
+</p>
 
-[![WordPress Plugin Version](https://img.shields.io/badge/version-1.4.0-blue)](https://github.com/bigrat95/delete-unused-images/releases)
-[![WordPress Tested](https://img.shields.io/badge/WordPress-6.9-green)](https://wordpress.org/)
-[![PHP Version](https://img.shields.io/badge/PHP-7.4%2B-purple)](https://php.net/)
-[![License](https://img.shields.io/badge/license-GPL--2.0--or--later-orange)](https://www.gnu.org/licenses/gpl-2.0.html)
+<h1 align="center">Delete Unused Images</h1>
 
-A WordPress plugin that scans your entire site to find and remove unused media files, freeing up disk space. Performs deep analysis across 10+ sources to accurately determine which files are safe to remove.
+<p align="center">
+  <img src="assets/images/icon-256x256.png" alt="Plugin Icon" width="80">
+</p>
+
+<p align="center">
+  <a href="https://github.com/bigrat95/delete-unused-images/releases"><img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version"></a>
+  <a href="https://wordpress.org/"><img src="https://img.shields.io/badge/WordPress-6.9-green" alt="WordPress"></a>
+  <a href="https://php.net/"><img src="https://img.shields.io/badge/PHP-7.4%2B-purple" alt="PHP"></a>
+  <a href="https://www.gnu.org/licenses/gpl-2.0.html"><img src="https://img.shields.io/badge/license-GPL--2.0--or--later-orange" alt="License"></a>
+</p>
+
+<p align="center">
+  A WordPress plugin that scans your entire site to find and remove unused media files, freeing up disk space.<br>
+  Performs deep analysis across 10+ sources to accurately determine which files are safe to remove.
+</p>
 
 ---
 
@@ -22,6 +35,7 @@ A WordPress plugin that scans your entire site to find and remove unused media f
   - [Scheduled Auto-Cleanup](#scheduled-auto-cleanup)
 - [Plugin Structure](#plugin-structure)
 - [FAQ](#faq)
+- [Screenshots](#screenshots)
 - [Changelog](#changelog)
 - [Contributing](#contributing)
 - [License](#license)
@@ -271,6 +285,20 @@ No. The plugin only loads its assets on the plugin's admin page. Nothing runs on
 ### What happens when I uninstall?
 
 All plugin options and cron schedules are removed. Your media files are not affected.
+
+---
+
+## Screenshots
+
+### Main Dashboard
+Stats overview with total media, in-use count, unused count, space to free, and whitelisted count. Scan button with last scan date. Tabbed interface (Unused / Whitelist / Trash) with bulk actions, search, sort, and file type filter.
+
+![Main Dashboard](assets/images/screenshot-1.png)
+
+### Pagination & Auto-Cleanup
+Per-page selector, pagination controls, and the Scheduled Auto-Cleanup settings panel with frequency options and next run info.
+
+![Pagination & Auto-Cleanup](assets/images/screenshot-2.png)
 
 ---
 
