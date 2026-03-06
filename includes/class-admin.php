@@ -159,41 +159,44 @@ class DUI_Admin {
                     <span id="dui-selected-info" class="description" style="margin-left:8px;"></span>
                 </div>
                 <div class="alignright">
+                    <?php
+                    $scan_results = get_option('dui_scan_results', []);
+                    $found_exts = [];
+                    foreach ($scan_results as $item) {
+                        $ext = strtolower($item['ext'] ?? '');
+                        if ($ext && !isset($found_exts[$ext])) $found_exts[$ext] = strtoupper($ext);
+                    }
+                    ksort($found_exts);
+
+                    $groups = [
+                        __('Images', 'delete-unused-images')    => ['jpg','jpeg','png','gif','webp','svg','ico','bmp','tiff','heic'],
+                        __('Documents', 'delete-unused-images') => ['pdf','doc','docx','xls','xlsx','csv','ppt','pptx','txt','zip','rar'],
+                        __('Video', 'delete-unused-images')     => ['mp4','mov','avi','webm','wmv','mkv'],
+                        __('Audio', 'delete-unused-images')     => ['mp3','wav','ogg','flac','aac'],
+                    ];
+                    ?>
                     <select id="dui-filter-type" style="vertical-align:middle;">
                         <option value=""><?php _e('All Types', 'delete-unused-images'); ?></option>
-                        <optgroup label="<?php esc_attr_e('Images', 'delete-unused-images'); ?>">
-                            <option value="jpg">JPG</option>
-                            <option value="jpeg">JPEG</option>
-                            <option value="png">PNG</option>
-                            <option value="gif">GIF</option>
-                            <option value="webp">WebP</option>
-                            <option value="svg">SVG</option>
-                            <option value="ico">ICO</option>
-                            <option value="bmp">BMP</option>
+                        <?php foreach ($groups as $label => $exts):
+                            $group_items = array_intersect_key($found_exts, array_flip($exts));
+                            if (empty($group_items)) continue;
+                        ?>
+                        <optgroup label="<?php echo esc_attr($label); ?>">
+                            <?php foreach ($group_items as $ext => $display): ?>
+                            <option value="<?php echo esc_attr($ext); ?>"><?php echo esc_html($display); ?></option>
+                            <?php endforeach; ?>
                         </optgroup>
-                        <optgroup label="<?php esc_attr_e('Documents', 'delete-unused-images'); ?>">
-                            <option value="pdf">PDF</option>
-                            <option value="doc">DOC</option>
-                            <option value="docx">DOCX</option>
-                            <option value="xls">XLS</option>
-                            <option value="xlsx">XLSX</option>
-                            <option value="csv">CSV</option>
-                            <option value="ppt">PPT</option>
-                            <option value="pptx">PPTX</option>
-                            <option value="txt">TXT</option>
-                            <option value="zip">ZIP</option>
+                        <?php endforeach;
+                        // Any extensions not in known groups
+                        $known = array_merge(...array_values($groups));
+                        $other = array_diff_key($found_exts, array_flip($known));
+                        if (!empty($other)): ?>
+                        <optgroup label="<?php esc_attr_e('Other', 'delete-unused-images'); ?>">
+                            <?php foreach ($other as $ext => $display): ?>
+                            <option value="<?php echo esc_attr($ext); ?>"><?php echo esc_html($display); ?></option>
+                            <?php endforeach; ?>
                         </optgroup>
-                        <optgroup label="<?php esc_attr_e('Video', 'delete-unused-images'); ?>">
-                            <option value="mp4">MP4</option>
-                            <option value="mov">MOV</option>
-                            <option value="avi">AVI</option>
-                            <option value="webm">WebM</option>
-                        </optgroup>
-                        <optgroup label="<?php esc_attr_e('Audio', 'delete-unused-images'); ?>">
-                            <option value="mp3">MP3</option>
-                            <option value="wav">WAV</option>
-                            <option value="ogg">OGG</option>
-                        </optgroup>
+                        <?php endif; ?>
                     </select>
                     <input type="search" id="dui-search" placeholder="<?php esc_attr_e('Search files...', 'delete-unused-images'); ?>" style="vertical-align:middle;">
                     <button type="button" id="dui-search-btn" class="button"><?php _e('Search', 'delete-unused-images'); ?></button>
