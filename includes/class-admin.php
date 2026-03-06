@@ -161,14 +161,39 @@ class DUI_Admin {
                 <div class="alignright">
                     <select id="dui-filter-type" style="vertical-align:middle;">
                         <option value=""><?php _e('All Types', 'delete-unused-images'); ?></option>
-                        <option value="jpg"><?php _e('JPG', 'delete-unused-images'); ?></option>
-                        <option value="jpeg"><?php _e('JPEG', 'delete-unused-images'); ?></option>
-                        <option value="png"><?php _e('PNG', 'delete-unused-images'); ?></option>
-                        <option value="gif"><?php _e('GIF', 'delete-unused-images'); ?></option>
-                        <option value="webp"><?php _e('WebP', 'delete-unused-images'); ?></option>
-                        <option value="svg"><?php _e('SVG', 'delete-unused-images'); ?></option>
-                        <option value="pdf"><?php _e('PDF', 'delete-unused-images'); ?></option>
-                        <option value="mp4"><?php _e('MP4', 'delete-unused-images'); ?></option>
+                        <optgroup label="<?php esc_attr_e('Images', 'delete-unused-images'); ?>">
+                            <option value="jpg">JPG</option>
+                            <option value="jpeg">JPEG</option>
+                            <option value="png">PNG</option>
+                            <option value="gif">GIF</option>
+                            <option value="webp">WebP</option>
+                            <option value="svg">SVG</option>
+                            <option value="ico">ICO</option>
+                            <option value="bmp">BMP</option>
+                        </optgroup>
+                        <optgroup label="<?php esc_attr_e('Documents', 'delete-unused-images'); ?>">
+                            <option value="pdf">PDF</option>
+                            <option value="doc">DOC</option>
+                            <option value="docx">DOCX</option>
+                            <option value="xls">XLS</option>
+                            <option value="xlsx">XLSX</option>
+                            <option value="csv">CSV</option>
+                            <option value="ppt">PPT</option>
+                            <option value="pptx">PPTX</option>
+                            <option value="txt">TXT</option>
+                            <option value="zip">ZIP</option>
+                        </optgroup>
+                        <optgroup label="<?php esc_attr_e('Video', 'delete-unused-images'); ?>">
+                            <option value="mp4">MP4</option>
+                            <option value="mov">MOV</option>
+                            <option value="avi">AVI</option>
+                            <option value="webm">WebM</option>
+                        </optgroup>
+                        <optgroup label="<?php esc_attr_e('Audio', 'delete-unused-images'); ?>">
+                            <option value="mp3">MP3</option>
+                            <option value="wav">WAV</option>
+                            <option value="ogg">OGG</option>
+                        </optgroup>
                     </select>
                     <input type="search" id="dui-search" placeholder="<?php esc_attr_e('Search files...', 'delete-unused-images'); ?>" style="vertical-align:middle;">
                     <button type="button" id="dui-search-btn" class="button"><?php _e('Search', 'delete-unused-images'); ?></button>
