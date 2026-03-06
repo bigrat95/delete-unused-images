@@ -321,9 +321,10 @@
 
         buildPagination: function() {
             var $pag = $('#dui-pagination');
-            var totalPages = parseInt($pag.data('totalPages')) || 0;
-            var currentPage = parseInt($pag.data('currentPage')) || 1;
-            var totalItems = parseInt($pag.data('totalItems')) || 0;
+            var el = $pag[0];
+            var totalPages = parseInt(el && el.dataset.totalPages) || 0;
+            var currentPage = this.currentPage;
+            var totalItems = parseInt(el && el.dataset.totalItems) || 0;
 
             $pag.empty();
 
